@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quran Memorization Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f0;color:#1a1a1a;padding:16px;max-width:700px;margin:0 auto}
+h1{font-size:22px;font-weight:500;text-align:center;margin-bottom:4px}
+.subtitle{font-size:14px;color:#666;text-align:center;margin-bottom:20px}
+.progress-wrap{background:#fff;border:1px solid #e0e0d8;border-radius:12px;padding:16px;margin-bottom:16px}
+.progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.progress-label{font-size:13px;color:#666}
+.progress-val{font-size:14px;font-weight:500}
+.bar-bg{background:#e8e8e0;border-radius:99px;height:8px;width:100%;margin-bottom:8px}
+.bar-fill{height:8px;border-radius:99px;background:#1D9E75;transition:width 0.4s}
+.badge{font-size:12px;padding:3px 10px;border-radius:6px;display:inline-block}
+.badge-good{background:#E1F5EE;color:#0F6E56}
+.badge-behind{background:#FAECE7;color:#993C1D}
+.badge-ahead{background:#EAF3DE;color:#3B6D11}
+.badge-open{background:#f0f0e8;color:#666}
+.day-card{background:#fff;border:1px solid #e0e0d8;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.day-card.today{border:2px solid #1D9E75}
+.day-header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;cursor:pointer;border-bottom:1px solid #e8e8e0;user-select:none}
+.day-title{font-size:15px;font-weight:500}
+.day-header-right{display:flex;align-items:center;gap:8px}
+.day-pct{font-size:12px;padding:2px 8px;border-radius:6px}
+.chev{font-size:11px;color:#999;transition:transform 0.2s;display:inline-block}
+.chev.open{transform:rotate(180deg)}
+.day-body{padding:12px 16px;display:none}
+.day-body.open{display:block}
+.sec-label{font-size:11px;font-weight:500;color:#999;letter-spacing:0.5px;text-transform:uppercase;margin:10px 0 6px}
+.sec-label:first-child{margin-top:0}
+.task{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0e8}
+.task:last-child{border-bottom:none}
+.task input[type=checkbox]{width:16px;height:16px;margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:#1D9E75}
+.task-text{font-size:14px;line-height:1.5}
+.task-text.done{text-decoration:line-through;color:#aaa}
+.diff{font-size:11px;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle}
+.diff-easy{background:#EAF3DE;color:#3B6D11}
+.diff-med{background:#FAEEDA;color:#854F0B}
+.diff-hard{background:#FAECE7;color:#993C1D}
+@media(prefers-color-scheme:dark){
+  body{background:#1a1a18;color:#e8e8e0}
+  .progress-wrap,.day-card{background:#242422;border-color:#3a3a36}
+  .day-card.today{border-color:#1D9E75}
+  .day-header{border-bottom-color:#3a3a36}
+  .bar-bg{background:#3a3a36}
+  .task{border-bottom-color:#2e2e2a}
+  .task-text.done{color:#666}
+  .badge-open{background:#2e2e2a;color:#999}
+  .progress-label,.subtitle{color:#999}
+}
+</style>
+</head>
+<body>
+<h1>Quran memorization tracker</h1>
+<p class="subtitle">March 27 – April 7, 2026 · Al Mumtahana &amp; Al Hashr</p>
+<div class="progress-wrap">
+  <div class="progress-row"><span class="progress-label">Overall progress</span><span class="progress-val" id="pct-val">0%</span></div>
+  <div class="bar-bg"><div class="bar-fill" id="main-bar" style="width:0%"></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <span class="progress-label" id="task-count">0 of 0 tasks done</span>
+    <span class="badge badge-open" id="track-badge">—</span>
+  </div>
+</div>
+<div id="days-container"></div>
+<script>
+const days=[
+  {date:"Thu Mar 27",label:"Day 1",memorize:[{t:"Al Mumtahana 60:5–8 (4 verses) — forgiveness & dealing with peaceful non-believers",diff:"med"}],review:[{t:"Juz' 30 — Al Naba' (78:1–20) to Al Infitar (82)",diff:"easy"}]},
+  {date:"Fri Mar 28",label:"Day 2",memorize:[{t:"Al Mumtahana 60:9–13 (5 verses) — completing Al Mumtahana",diff:"med"}],review:[{t:"Juz' 30 — Al Mutaffifin (83) to Al Ghashiya (88)",diff:"easy"}]},
+  {date:"Sat Mar 29",label:"Day 3",memorize:[{t:"Al Hashr 59:1–5 (5 verses) — battle context & exile of Banu Nadir",diff:"hard"}],review:[{t:"Juz' 30 — Al Fajr (89) to Al Qadr (97)",diff:"easy"}]},
+  {date:"Sun Mar 30",label:"Day 4",memorize:[{t:"Al Hashr 59:6–10 (5 verses) — distribution of spoils & praise of Ansar",diff:"hard"}],review:[{t:"Juz' 30 — Al Bayyina (98) to Al Nas (114)",diff:"easy"}]},
+  {date:"Mon Mar 31",label:"Day 5",memorize:[{t:"Al Hashr 59:11–14 (4 verses) — the hypocrites & their deception",diff:"med"}],review:[{t:"Juz' 29 — Al Mulk (67) to Al Jinn (72:15)",diff:"med"}]},
+  {date:"Tue Apr 1",label:"Day 6",memorize:[{t:"Al Hashr 59:15–19 (5 verses) — fate of wrongdoers & taqwa reminder",diff:"med"}],review:[{t:"Juz' 29 — Al Jinn (72:16) to Al Muzzammil (73) to Al Qiyama (75)",diff:"med"}]},
+  {date:"Wed Apr 2",label:"Day 7",memorize:[{t:"Al Hashr 59:20–24 (5 verses) — powerful closing & names of Allah",diff:"hard"}],review:[{t:"Juz' 29 — Al Insan (76) to Al Mursalat (77)",diff:"med"}]},
+  {date:"Thu Apr 3",label:"Day 8",memorize:[{t:"Revision — full run of Al Hashr (24 verses) from memory",diff:"hard"}],review:[{t:"Juz' 28 memorized portion — Al Mujadila (58) & review",diff:"med"}]},
+  {date:"Fri Apr 4",label:"Day 9",memorize:[{t:"Revision — full run of Al Mumtahana (13 verses) from memory",diff:"med"}],review:[{t:"Juz' 29 — full light review pass",diff:"easy"}]},
+  {date:"Sat Apr 5",label:"Day 10",memorize:[{t:"Recitation test — Al Mumtahana + Al Hashr back to back",diff:"hard"}],review:[{t:"Juz' 30 — full recitation pass",diff:"easy"}]},
+  {date:"Sun Apr 6",label:"Day 11",memorize:[{t:"Fix weak spots from Day 10 test",diff:"med"}],review:[{t:"Juz' 28 portion — all surahs before Al Mumtahana",diff:"med"}]},
+  {date:"Mon Apr 7",label:"Day 12 — Final",memorize:[{t:"Grand recitation — everything from Juz' 28 portion to Al Nas without stopping",diff:"hard"}],review:[{t:"Full cycle complete — all Juz' 28/29/30 material",diff:"hard"}]}
+];
+const TODAY="Thu Mar 27";
+const TODAY_IDX=days.findIndex(d=>d.date===TODAY);
+const SK="quran_tracker_v3";
+let state={};
+try{state=JSON.parse(localStorage.getItem(SK)||"{}");}catch(e){}
+function save(){try{localStorage.setItem(SK,JSON.stringify(state));}catch(e){}}
+function key(d,s,i){return"d"+d+"_"+s+"_"+i;}
+function build(){
+  const c=document.getElementById("days-container");c.innerHTML="";
+  days.forEach((day,di)=>{
+    const allKeys=[...day.memorize.map((_,i)=>key(di,"m",i)),...day.review.map((_,i)=>key(di,"r",i))];
+    const done=allKeys.filter(k=>state[k]).length;
+    const pct=allKeys.length?Math.round(done/allKeys.length*100):0;
+    const card=document.createElement("div");
+    card.className="day-card"+(di===TODAY_IDX?" today":"");
+    let bCls="badge-open",bTxt="Upcoming";
+    if(di<TODAY_IDX){bCls=pct===100?"badge-good":"badge-open";bTxt=pct===100?"Done":pct+"%";}
+    else if(di===TODAY_IDX){bCls=pct===100?"badge-good":"badge-open";bTxt=pct===100?"Done!":"Today";}
+    const hdr=document.createElement("div");hdr.className="day-header";
+    hdr.innerHTML='<div class="day-title">'+day.label+' — '+day.date+'</div><div class="day-header-right"><span class="day-pct badge '+bCls+'">'+bTxt+'</span><span class="chev" id="chev'+di+'">&#9660;</span></div>';
+    const body=document.createElement("div");body.className="day-body"+(di===TODAY_IDX?" open":"");body.id="body"+di;
+    let h='<div class="sec-label">New memorization</div>';
+    day.memorize.forEach((t,i)=>{const k=key(di,"m",i);h+='<div class="task"><input type="checkbox" data-key="'+k+'"'+(state[k]?' checked':'')+' ><span class="task-text'+(state[k]?' done':'')+'">'+t.t+'<span class="diff diff-'+t.diff+'">'+t.diff+'</span></span></div>';});
+    h+='<div class="sec-label">Review</div>';
+    day.review.forEach((t,i)=>{const k=key(di,"r",i);h+='<div class="task"><input type="checkbox" data-key="'+k+'"'+(state[k]?' checked':'')+' ><span class="task-text'+(state[k]?' done':'')+'">'+t.t+'<span class="diff diff-'+t.diff+'">'+t.diff+'</span></span></div>';});
+    body.innerHTML=h;
+    hdr.addEventListener("click",()=>{document.getElementById("body"+di).classList.toggle("open");document.getElementById("chev"+di).classList.toggle("open");});
+    if(di===TODAY_IDX)setTimeout(()=>{const ch=document.getElementById("chev"+di);if(ch)ch.classList.add("open");},50);
+    body.querySelectorAll("input[type=checkbox]").forEach(cb=>{cb.addEventListener("change",e=>{state[e.target.dataset.key]=e.target.checked;save();build();});});
+    card.appendChild(hdr);card.appendChild(body);c.appendChild(card);
+  });
+  updateProgress();
+}
+function updateProgress(){
+  let total=0,done=0;
+  days.forEach((day,di)=>{const all=[...day.memorize.map((_,i)=>key(di,"m",i)),...day.review.map((_,i)=>key(di,"r",i))];total+=all.length;done+=all.filter(k=>state[k]).length;});
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById("pct-val").textContent=pct+"%";
+  document.getElementById("main-bar").style.width=pct+"%";
+  document.getElementById("task-count").textContent=done+" of "+total+" tasks done";
+  const exp=Math.round((TODAY_IDX+1)/12*100);
+  const badge=document.getElementById("track-badge");
+  if(pct>=exp+5){badge.className="badge badge-ahead";badge.textContent="Ahead of schedule";}
+  else if(pct>=exp-10){badge.className="badge badge-good";badge.textContent="On track";}
+  else{badge.className="badge badge-behind";badge.textContent="Behind — catch up!";}
+}
+build();
+</script>
+</body>
+</html>
